@@ -82,12 +82,8 @@ export function GooglePlacesAutocomplete({
 
   const initializeServices = () => {
     if (window.google && window.google.maps && window.google.maps.places) {
-      // Use new AutocompleteSuggestion if available, fallback to AutocompleteService
-      if (window.google.maps.places.AutocompleteSuggestion) {
-        console.log('Using new Google Places AutocompleteSuggestion API');
-        setIsGoogleLoaded(true);
-      } else if (window.google.maps.places.AutocompleteService) {
-        console.log('Using legacy Google Places AutocompleteService API');
+      if (window.google.maps.places.AutocompleteService) {
+        console.log('Using Google Places AutocompleteService API');
         const autocomplete = new window.google.maps.places.AutocompleteService();
         setAutocompleteService(autocomplete);
         setIsGoogleLoaded(true);
@@ -114,39 +110,7 @@ export function GooglePlacesAutocomplete({
 
   const fetchPlaceSuggestions = async (query: string) => {
     try {
-      // Use new AutocompleteSuggestion API if available
-      if (window.google?.maps?.places?.AutocompleteSuggestion) {
-        const request = {
-          textQuery: query,
-          fields: ['id', 'displayName', 'formattedAddress', 'location', 'types'],
-          includedType: 'locality', // Focus on cities
-          maxResultCount: 5,
-          regionCode: 'US'
-        };
-
-        const response = await window.google.maps.places.AutocompleteSuggestion.searchByText(request);
-        
-        if (response.places) {
-          // Transform to match old AutocompleteService format
-          const predictions = response.places.map(place => ({
-            place_id: place.id,
-            description: place.formattedAddress,
-            structured_formatting: {
-              main_text: place.displayName.text,
-              secondary_text: place.formattedAddress.replace(place.displayName.text, '').trim()
-            },
-            types: place.types
-          }));
-          setSuggestions(predictions);
-          setShowSuggestions(true);
-          setSelectedIndex(-1);
-        } else {
-          setSuggestions([]);
-          setShowSuggestions(false);
-        }
-      } 
-      // Fallback to legacy AutocompleteService
-      else if (autocompleteService) {
+      if (autocompleteService) {
         const request = {
           input: query,
           types: ['(cities)'], // Focus on cities
@@ -465,7 +429,7 @@ export function CollegeScorecardAutocomplete({
     const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/education/college-scorecard?query=${encodeURIComponent(value)}`);
+        const response = await fetch(`/api/education?action=college-scorecard&query=${encodeURIComponent(value)}`);
         const data = await response.json();
         
         if (data.institutions) {

@@ -213,11 +213,13 @@ export default function HomePage() {
 
       case "documents":
         return (
-          <ResumeUploadWithPreview
-            onResumeUploaded={handleResumeUploaded}
-            currentResume={resumeData}
-            onNavigateToJobs={() => setCurrentStep("jobs")}
-          />
+          <div className="h-screen">
+            <ResumeUploadWithPreview
+              onResumeUploaded={handleResumeUploaded}
+              currentResume={resumeData}
+              onNavigateToJobs={() => setCurrentStep("jobs")}
+            />
+          </div>
         );
 
       case "jobs":

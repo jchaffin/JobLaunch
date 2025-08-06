@@ -3,7 +3,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ParsedResumeData {
   summary?: string;
@@ -50,9 +53,60 @@ interface StructuredResumePreviewProps {
   resumeData: ParsedResumeData | null;
   title?: string;
   className?: string;
+  onImprove?: (improvedData: ParsedResumeData) => void;
 }
 
-export function StructuredResumePreview({ resumeData, title = "Resume Preview", className }: StructuredResumePreviewProps) {
+export default function StructuredResumePreview({ resumeData, title = "Resume Preview", className, onImprove }: StructuredResumePreviewProps) {
+  const [isImproving, setIsImproving] = useState(false);
+  const { toast } = useToast();
+
+  const handleImproveWithAI = async () => {
+    if (!resumeData) return;
+    
+    setIsImproving(true);
+    try {
+      const response = await fetch('/api/resume', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'improve',
+          resumeData: resumeData
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to improve resume');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Resume Improved!",
+          description: "Your resume has been enhanced with AI-powered improvements.",
+        });
+        
+        // Update the parent component with the improved data
+        if (onImprove && result.data) {
+          onImprove(result.data);
+        }
+      } else {
+        throw new Error(result.error || 'Improvement failed');
+      }
+    } catch (error) {
+      console.error('Improve error:', error);
+      toast({
+        title: "Improvement Failed",
+        description: "There was an error improving your resume. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
   if (!resumeData) {
     return (
       <div className="text-center text-gray-500">
@@ -191,10 +245,21 @@ export function StructuredResumePreview({ resumeData, title = "Resume Preview", 
       {/* ATS Score and Recommendations */}
       {(resumeData.ats_score || (resumeData.ats_recommendations && resumeData.ats_recommendations.length > 0)) && (
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
-          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-            ATS Analysis & Recommendations
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold text-gray-900 flex items-center">
+              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+              ATS Analysis & Recommendations
+            </h4>
+            <Button
+              onClick={handleImproveWithAI}
+              disabled={isImproving}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isImproving ? "Improving..." : "Improve with AI"}
+            </Button>
+          </div>
           
           {resumeData.ats_score && (
             <div className="mb-4">

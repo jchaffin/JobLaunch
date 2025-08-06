@@ -16,6 +16,9 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  X,
+  FileText,
+  ChevronDown,
 } from "lucide-react";
 import ResumeUpload from "@/components/pdf/ResumeUpload";
 import PDFPreviewPane from "@/components/pdf/PDFPreviewPane";
@@ -71,7 +74,7 @@ type ParsedResume = {
 };
 
 interface ResumeUploadWithPreviewProps {
-  onResumeUploaded: (resume: ParsedResume) => void;
+  onResumeUploaded: (resume: ParsedResume | null) => void;
   currentResume: ParsedResume | null;
   autoParseExisting?: boolean;
   onNavigateToJobs: () => void;
@@ -88,13 +91,12 @@ export default function ResumeUploadWithPreview({
 
 
   return (
-    <div className="flex h-full">
-      {/* Resume Upload Form - Full width when preview collapsed, half when expanded */}
-      <div className={`${showPreview ? 'w-1/2' : 'w-full'} overflow-y-auto bg-gray-50 p-6 transition-all duration-300`}>
+    <div className="flex h-full flex-col lg:flex-row">
+      {/* Resume Upload Form - Better responsive layout */}
+      <div className={`${showPreview ? 'lg:w-3/5 w-full' : 'w-full'} overflow-y-auto bg-gray-50 p-4 lg:p-6 transition-all duration-300`}>
         <ResumeUpload
           onResumeUploaded={onResumeUploaded}
           currentResume={currentResume}
-          autoParseExisting={autoParseExisting}
         />
 
         {/* Quick Actions Card */}
@@ -155,8 +157,8 @@ export default function ResumeUploadWithPreview({
           </Card>
         )}
         
-        {/* Floating Preview Toggle for when no resume */}
-        {!currentResume && (
+        {/* Preview Toggle Button - Show when collapsed or no resume */}
+        {(!showPreview || !currentResume) && (
           <div className="fixed bottom-6 right-6 z-10">
             <Button
               onClick={() => setShowPreview(!showPreview)}
@@ -172,7 +174,7 @@ export default function ResumeUploadWithPreview({
               ) : (
                 <>
                   <Eye className="w-4 h-4 mr-2" />
-                  Show Preview
+                  Preview
                 </>
               )}
             </Button>
@@ -180,32 +182,42 @@ export default function ResumeUploadWithPreview({
         )}
       </div>
 
-      {/* PDF Preview Panel - Only show when expanded */}
-      {showPreview && (
-        <div className="w-1/2 bg-white border-l border-gray-200 transition-all duration-300">
-          {currentResume && (currentResume.summary || currentResume.contact?.firstName || currentResume.contact?.name || (currentResume.experience && currentResume.experience.length > 0)) ? (
-            <Card className="h-full rounded-none border-none">
-
-              <CardContent className="p-0 flex-1">
-                <div className="h-full overflow-hidden">
-                  <PDFPreviewPane resumeData={currentResume} />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <Eye className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium">PDF Preview</p>
-                <p className="text-sm">Resume data loaded - generating preview...</p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {currentResume ? "Processing resume data" : "Upload a resume to see the preview"}
-                </p>
-              </div>
+      {/* PDF Preview Panel - Enhanced UI */}
+      <div className={`${showPreview ? 'lg:w-2/5 w-full' : 'w-0'} lg:border-l border-t lg:border-t-0 border-gray-200 bg-white transition-all duration-300 overflow-hidden shadow-lg`}>
+        {showPreview && (
+          <>
+            {/* Simple Header with Big Arrow */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+              <h3 className="font-medium text-gray-900">PDF Preview</h3>
+              <Button
+                onClick={() => setShowPreview(false)}
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-gray-100"
+              >
+                <ChevronDown className="w-6 h-6" />
+              </Button>
             </div>
-          )}
-        </div>
-      )}
+            
+            {/* Simple Preview Content */}
+            {currentResume && (currentResume.summary || currentResume.contact?.firstName || currentResume.contact?.name || (currentResume.experience && currentResume.experience.length > 0)) ? (
+              <div className="h-full overflow-hidden">
+                <PDFPreviewPane resumeData={currentResume} />
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">PDF Preview</p>
+                  <p className="text-sm">
+                    {currentResume ? "Processing resume data" : "Upload a resume to see the preview"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
